@@ -28,6 +28,8 @@ namespace WFAHandShakingProtocol
         int successCount = 0;
         int errorCount = 0;
 
+        //int count = 0;
+
         //STX
         byte[] bSTX = new byte[1] { 0x02 };
         //CMD
@@ -59,7 +61,7 @@ namespace WFAHandShakingProtocol
             successText.ReadOnly = true;
             errorText.ReadOnly = true;
             //Set event timer tick by 2 seconds
-            timer.Interval = 2000;
+            timer.Interval = 50;
             //Always display latest item
             receivedDataBox.IntegralHeight = true;
             //Set count
@@ -95,6 +97,15 @@ namespace WFAHandShakingProtocol
                 timerRadio.Checked = false;
                 this.Invoke(new EventHandler(clearButton_Click));
             }
+        }
+
+        private void clearButton_Click(object sender, EventArgs e)
+        {
+            receivedDataBox.Items.Clear();
+            successText.Text = "0";
+            successCount = 0;
+            errorText.Text = "0";
+            errorCount = 0;
         }
 
         private void sendButton_Click(object sender, EventArgs e)
@@ -135,15 +146,6 @@ namespace WFAHandShakingProtocol
                 // Always display the lastest item
                 receivedDataBox.TopIndex = receivedDataBox.Items.Count - 1;
             }
-        }
-
-        private void clearButton_Click(object sender, EventArgs e)
-        {
-            receivedDataBox.Items.Clear();
-            successText.Text = "0";
-            successCount = 0;
-            errorText.Text = "0";
-            errorCount = 0;
         }
 
         private void posButton_Click(object sender, EventArgs e)
@@ -250,6 +252,8 @@ namespace WFAHandShakingProtocol
                 receivedDataBox.Items.Add("");
                 receivedDataBox.TopIndex = receivedDataBox.Items.Count - 1;
             }
+
+            //count++;
         }
 
         private void serialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -347,6 +351,13 @@ namespace WFAHandShakingProtocol
 
             // Renew sent bytes to prepare a new transmission
             bytesSend = new byte[18];
+
+            //if (count == 10000)
+            //{
+            //    timer.Stop();
+            //    eventRadio.Checked = true;
+            //    timerRadio.Checked = false;
+            //}    
         }
     }
 }
