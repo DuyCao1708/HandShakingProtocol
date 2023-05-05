@@ -72,6 +72,7 @@ uint8_t strCommand[4];
 uint8_t strOpt[3];
 uint8_t strData[8];
 
+uint8_t *subString(uint8_t *s, int pos, int index);
 bool StrCompare(uint8_t *pBuff, uint8_t *Sample, uint8_t nSize);
 bool WriteComm(uint8_t *pBuff, uint8_t nSize);
 bool ReadComm(uint8_t *pBuff, uint8_t nSize);
@@ -93,22 +94,23 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+ 
 
   /* USER CODE BEGIN Init */
-
+	HAL_Init();
+	MX_GPIO_Init();
+  MX_USART1_UART_Init();
   /* USER CODE END Init */
 
   /* Configure the system clock */
-  SystemClock_Config();
+
 
   /* USER CODE BEGIN SysInit */
-
+  SystemClock_Config();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_USART1_UART_Init();
+
   /* USER CODE BEGIN 2 */
 	HAL_UART_Receive_IT(&huart1, (uint8_t *)nRxData, MAX_LEN);
   /* USER CODE END 2 */
