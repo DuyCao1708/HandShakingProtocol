@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "string.h"
@@ -42,6 +43,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+TIM_HandleTypeDef htim2;
+
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
@@ -52,6 +55,7 @@ UART_HandleTypeDef huart1;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -109,7 +113,9 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART1_UART_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
 	HAL_UART_Receive_IT(&huart1, (uint8_t *)nRxData, MAX_LEN);
   /* USER CODE END 2 */
 
@@ -121,6 +127,50 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 		serialProcess();
+//		strData[0] = 0x30;
+//		strData[1] = 0x30;
+//		strData[2] = 0x31;
+//		uint8_t analogDuty = 0;
+//					for (int i = 0; i < 3; i++) 
+//					{
+//						analogDuty = analogDuty * 10 + (strData[i]-(uint8_t)'0');
+//					}
+//					__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_2, analogDuty*62);
+//					HAL_Delay(1000);
+//					
+//					for (int i = 0; i < 3; i++) 
+//					{
+//						analogDuty = analogDuty * 10 + (strData[i]-(uint8_t)'0');
+//					}
+//					__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_2, 62);
+//					HAL_Delay(1000);
+//					
+//					for (int i = 0; i < 3; i++) 
+//					{
+//						analogDuty = analogDuty * 10 + (strData[i]-(uint8_t)'0');
+//					}
+//					__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_2, 1);
+//					HAL_Delay(1000);
+					
+//		strData[0] = 0x30;
+//		strData[1] = 0x35;
+//		strData[2] = 0x30;
+//					for (int i = 0; i < 3; i++) 
+//					{
+//						analogDuty = analogDuty * 10 + (strData[i]-(uint8_t)'0');
+//					}
+//					__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_2, analogDuty*62);
+//					HAL_Delay(1000);
+//					
+//	 strData[0] = 0x31;
+//		strData[1] = 0x30;
+//		strData[2] = 0x30;
+//					for (int i = 0; i < 3; i++) 
+//					{
+//						analogDuty = analogDuty * 10 + (strData[i]-(uint8_t)'0');
+//					}
+//					__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_2, analogDuty*62);
+//					HAL_Delay(1000);
 
   }
   /* USER CODE END 3 */
@@ -280,6 +330,55 @@ bool serialProcess(void)
 
 					WriteComm(nTxData, MAX_LEN);
 				}
+				else if (StrCompare(strCommand, (uint8_t *)"DLED", 4))
+				{
+					memcpy(nTxData + nIndex, STX, 1);
+					nIndex += 1;
+					memcpy(nTxData + nIndex, strCommand, 4);
+					nIndex += 4;
+					memcpy(nTxData + nIndex, strOpt, 3);
+					nIndex += 3;
+					memcpy(nTxData + nIndex, strData, 8);
+					nIndex += 8;
+					memcpy(nTxData + nIndex, ACK, 1);
+					nIndex += 1;
+					memcpy(nTxData + nIndex, ETX, 1);
+
+					if (StrCompare(strData, (uint8_t *)"LED-ON", 8))
+					{
+						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+					}
+					else if (StrCompare(strData, (uint8_t *)"LED-OFF", 8))
+					{
+						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+					}
+					
+					WriteComm(nTxData, MAX_LEN);					
+				}
+				else if (StrCompare(strCommand, (uint8_t *)"ALED", 4))
+				{
+					memcpy(nTxData + nIndex, STX, 1);
+					nIndex += 1;
+					memcpy(nTxData + nIndex, strCommand, 4);
+					nIndex += 4;
+					memcpy(nTxData + nIndex, strOpt, 3);
+					nIndex += 3;
+					memcpy(nTxData + nIndex, strData, 8);
+					nIndex += 8;
+					memcpy(nTxData + nIndex, ACK, 1);
+					nIndex += 1;
+					memcpy(nTxData + nIndex, ETX, 1);
+
+					int analogDuty = 0;
+					for (int i = 0; i < 3; i++) 
+					{
+						analogDuty = analogDuty * 10 + (int)(strData[i]-(uint8_t)'0');
+					}
+					__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_2, analogDuty);
+					HAL_Delay(1000);
+					
+					WriteComm(nTxData, MAX_LEN);					
+				}
 				else
 				{
 					memcpy(nTxData + nIndex, STX, 1);
@@ -311,7 +410,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	HAL_UART_Receive_IT(&huart1, (uint8_t *)nRxData, MAX_LEN);
  }
 }
-
 /**
   * @brief System Clock Configuration
   * @retval None
@@ -349,6 +447,65 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 127;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 625;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+  HAL_TIM_MspPostInit(&htim2);
+
 }
 
 /**
@@ -402,9 +559,6 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_RESET);
-
   /*Configure GPIO pin : PC13 */
   GPIO_InitStruct.Pin = GPIO_PIN_13;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -417,13 +571,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PB11 */
-  GPIO_InitStruct.Pin = GPIO_PIN_11;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB6 PB7 */
   GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
