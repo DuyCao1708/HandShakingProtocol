@@ -39,6 +39,8 @@ namespace WFAHandShakingProtocol
         byte[] bGSTT = new byte[4] { 0x47, 0x53, 0x54, 0x54 }; // Command GSTT if sttButton is clicked
         byte[] bGCUS = new byte[4] { 0x47, 0x43, 0x55, 0x53 }; // Command GCUS if client sends data manually
         byte[] bGTIM = new byte[4] { 0x47, 0x54, 0x49, 0x4D }; // Command GTIM if client sends data automatically by timer
+        byte[] bDLED = new byte[4] { 0x44, 0x4C, 0x45, 0x44 }; // Command DLED if chBoxLedPC13 is changed
+        byte[] bALED = new byte[4] { 0x41, 0x4C, 0x45, 0x44 }; // Command ALED if setALedButton is changed
         //OPTION
         byte[] bOPT = new byte[3] { 0x4C, 0x30, 0x32 }; // Default transmit L-0-2
         //DATA
@@ -61,12 +63,16 @@ namespace WFAHandShakingProtocol
             successText.ReadOnly = true;
             errorText.ReadOnly = true;
             //Set event timer tick by 2 seconds
-            timer.Interval = 50;
+            timer.Interval = 2000;
             //Always display latest item
             receivedDataBox.IntegralHeight = true;
             //Set count
             successText.Text = successCount.ToString();
             errorText.Text = errorCount.ToString();
+            //Default DLED
+            chBoxLedPC13.Checked = true;
+            //
+            aLedText.Text = tBarALed.Value.ToString();
         }
 
         private void openButton_Click(object sender, EventArgs e)
@@ -220,6 +226,128 @@ namespace WFAHandShakingProtocol
             }
         }
 
+        private void chBoxLedPC13_CheckedChanged(object sender, EventArgs e)
+        {
+            if (eventRadio.Checked == true)
+            {
+                if (chBoxLedPC13.Checked == true)
+                {
+                    dataSend = "LED-ON";
+                }
+                else
+                {
+                    dataSend = "LED-OFF";
+                }
+
+                // Convert data in textBox into byte array
+                byte[] bytes = Encoding.ASCII.GetBytes(dataSend);
+                if (bytes.Length < 8)
+                {
+                    // If byte array has less than 8 elements, add 0x00 into the remainings
+                    byte[] newbytes = new byte[8];
+                    Array.Copy(bytes, newbytes, bytes.Length);
+                    for (int i = bytes.Length; i < newbytes.Length; i++)
+                    {
+                        newbytes[i] = 0x00;
+                    }
+                    Array.Resize(ref bytes, 8);
+                    Array.Copy(newbytes, bytes, newbytes.Length);
+                }
+                // Concatenate arrays to create a transmitting framedata
+                byte[] dLedDataSend = bSTX.Concat(bDLED).Concat(bOPT).Concat(bytes).Concat(bSYNC).Concat(bETX).ToArray();
+                // Convert the recent array to string of bytes, consisting of hex of each byte
+                string dLedDataSendToHex = BitConverter.ToString(dLedDataSend).Replace("-", " ");
+                // Eliminate the start, sync/ack, exit byte of the framedata to display on the listBox
+                byte[] dLedDataSendDisplay = bDLED.Concat(bOPT).Concat(bytes).ToArray();
+                // Replace the escape sequence created by 0 character in bytes when concatenating
+                string dLedDataSendToChar = Encoding.ASCII.GetString(dLedDataSendDisplay).Replace("\0", "");
+
+                if (serialPort.IsOpen && eventRadio.Checked)
+                {
+                    // Write framedata to serial port
+                    serialPort.Write(dLedDataSend, 0, dLedDataSend.Length);
+                    // Store the written data to validate later
+                    Array.Copy(dLedDataSend, bytesSend, dLedDataSend.Length);
+                    receivedDataBox.Items.Add("DLED data (HEX): " + dLedDataSendToHex);
+                    receivedDataBox.Items.Add("DLED data (CHAR): " + dLedDataSendToChar);
+                    receivedDataBox.Items.Add("");
+                    // Always display the lastest item
+                    receivedDataBox.TopIndex = receivedDataBox.Items.Count - 1;
+                }
+            }
+        }
+
+        private void tBarALed_Scroll(object sender, EventArgs e)
+        {
+            aLedText.Text = tBarALed.Value.ToString();
+        }
+
+        private void aLedText_TextChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                if (aLedText.Text != "")
+                {
+                    tBarALed.Value = Convert.ToInt32(aLedText.Text);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void setALedButton_Click(object sender, EventArgs e)
+        {
+            if (eventRadio.Checked == true)
+            {
+                dataSend = aLedText.Text;
+                if (Convert.ToInt32(dataSend) < 100)
+                {
+                    dataSend = "0" + dataSend;
+                    if (Convert.ToInt32(dataSend) < 10)
+                    {
+                        dataSend = "0" + dataSend;
+                    }    
+                }    
+                // Convert data in textBox into byte array
+                byte[] bytes = Encoding.ASCII.GetBytes(dataSend);
+                if (bytes.Length < 8)
+                {
+                    // If byte array has less than 8 elements, add 0x00 into the remainings
+                    byte[] newbytes = new byte[8];
+                    Array.Copy(bytes, newbytes, bytes.Length);
+                    for (int i = bytes.Length; i < newbytes.Length; i++)
+                    {
+                        newbytes[i] = 0x00;
+                    }
+                    Array.Resize(ref bytes, 8);
+                    Array.Copy(newbytes, bytes, newbytes.Length);
+                }
+                // Concatenate arrays to create a transmitting framedata
+                byte[] aLedDataSend = bSTX.Concat(bALED).Concat(bOPT).Concat(bytes).Concat(bSYNC).Concat(bETX).ToArray();
+                // Convert the recent array to string of bytes, consisting of hex of each byte
+                string aLedDataSendToHex = BitConverter.ToString(aLedDataSend).Replace("-", " ");
+                // Eliminate the start, sync/ack, exit byte of the framedata to display on the listBox
+                byte[] aLedDataSendDisplay = bALED.Concat(bOPT).Concat(bytes).ToArray();
+                // Replace the escape sequence created by 0 character in bytes when concatenating
+                string aLedDataSendToChar = Encoding.ASCII.GetString(aLedDataSendDisplay).Replace("\0", "");
+
+                if (serialPort.IsOpen && eventRadio.Checked)
+                {
+                    // Write framedata to serial port
+                    serialPort.Write(aLedDataSend, 0, aLedDataSend.Length);
+                    // Store the written data to validate later
+                    Array.Copy(aLedDataSend, bytesSend, aLedDataSend.Length);
+                    receivedDataBox.Items.Add("ALED data (HEX): " + aLedDataSendToHex);
+                    receivedDataBox.Items.Add("ALED data (CHAR): " + aLedDataSendToChar);
+                    receivedDataBox.Items.Add("");
+                    // Always display the lastest item
+                    receivedDataBox.TopIndex = receivedDataBox.Items.Count - 1;
+                }
+            }
+        }
+
         private void timerRadio_CheckedChanged(object sender, EventArgs e)
         {
             if (timerRadio.Checked)
@@ -307,13 +435,13 @@ namespace WFAHandShakingProtocol
 
             // Extract sent data
             byte[] bytesDataSend = new byte[8];
-            Array.Copy(bytesSend, 8, bytesDataSend, 0, 8);
+            Array.Copy(bytesSend, 8, bytesDataSend, 0, 8);  
 
             // Declare flag to validate
             bool validateFlag = true; 
 
             // Check if command bytes are wrong
-            if (!bytesCommandReceived.SequenceEqual(bGPOS) && !bytesCommandReceived.SequenceEqual(bGVEL) && !bytesCommandReceived.SequenceEqual(bGSTT) && !bytesCommandReceived.SequenceEqual(bGMOV) && !bytesCommandReceived.SequenceEqual(bGCUS) && !bytesCommandReceived.SequenceEqual(bGTIM)) 
+            if (!bytesCommandReceived.SequenceEqual(bGPOS) && !bytesCommandReceived.SequenceEqual(bGVEL) && !bytesCommandReceived.SequenceEqual(bGSTT) && !bytesCommandReceived.SequenceEqual(bGMOV) && !bytesCommandReceived.SequenceEqual(bGCUS) && !bytesCommandReceived.SequenceEqual(bGTIM) && !bytesCommandReceived.SequenceEqual(bDLED) && !bytesCommandReceived.SequenceEqual(bALED)) 
             {
                 validateFlag = false;
             }

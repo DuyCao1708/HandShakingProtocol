@@ -57,10 +57,21 @@ namespace WFAHandShakingProtocol
             this.sendText = new System.Windows.Forms.TextBox();
             this.timer = new System.Windows.Forms.Timer(this.components);
             this.serialPort = new System.IO.Ports.SerialPort(this.components);
+            this.groupBox5 = new System.Windows.Forms.GroupBox();
+            this.chBoxLedPC13 = new System.Windows.Forms.CheckBox();
+            this.groupBox6 = new System.Windows.Forms.GroupBox();
+            this.setALedButton = new System.Windows.Forms.Button();
+            this.tBarALed = new System.Windows.Forms.TrackBar();
+            this.label5 = new System.Windows.Forms.Label();
+            this.label6 = new System.Windows.Forms.Label();
+            this.aLedText = new System.Windows.Forms.TextBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
             this.groupBox4.SuspendLayout();
+            this.groupBox5.SuspendLayout();
+            this.groupBox6.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.tBarALed)).BeginInit();
             this.SuspendLayout();
             // 
             // groupBox1
@@ -328,11 +339,94 @@ namespace WFAHandShakingProtocol
             // 
             this.serialPort.DataReceived += new System.IO.Ports.SerialDataReceivedEventHandler(this.serialPort_DataReceived);
             // 
+            // groupBox5
+            // 
+            this.groupBox5.Controls.Add(this.chBoxLedPC13);
+            this.groupBox5.Location = new System.Drawing.Point(1028, 12);
+            this.groupBox5.Name = "groupBox5";
+            this.groupBox5.Size = new System.Drawing.Size(156, 80);
+            this.groupBox5.TabIndex = 4;
+            this.groupBox5.TabStop = false;
+            this.groupBox5.Text = "DLED - PC13";
+            // 
+            // chBoxLedPC13
+            // 
+            this.chBoxLedPC13.AutoSize = true;
+            this.chBoxLedPC13.Location = new System.Drawing.Point(27, 34);
+            this.chBoxLedPC13.Name = "chBoxLedPC13";
+            this.chBoxLedPC13.Size = new System.Drawing.Size(102, 24);
+            this.chBoxLedPC13.TabIndex = 0;
+            this.chBoxLedPC13.Text = "ON / OFF";
+            this.chBoxLedPC13.UseVisualStyleBackColor = true;
+            this.chBoxLedPC13.CheckedChanged += new System.EventHandler(this.chBoxLedPC13_CheckedChanged);
+            // 
+            // groupBox6
+            // 
+            this.groupBox6.Controls.Add(this.aLedText);
+            this.groupBox6.Controls.Add(this.label6);
+            this.groupBox6.Controls.Add(this.label5);
+            this.groupBox6.Controls.Add(this.tBarALed);
+            this.groupBox6.Controls.Add(this.setALedButton);
+            this.groupBox6.Location = new System.Drawing.Point(1029, 99);
+            this.groupBox6.Name = "groupBox6";
+            this.groupBox6.Size = new System.Drawing.Size(155, 452);
+            this.groupBox6.TabIndex = 5;
+            this.groupBox6.TabStop = false;
+            this.groupBox6.Text = "ALED";
+            // 
+            // setALedButton
+            // 
+            this.setALedButton.Location = new System.Drawing.Point(26, 411);
+            this.setALedButton.Name = "setALedButton";
+            this.setALedButton.Size = new System.Drawing.Size(110, 35);
+            this.setALedButton.TabIndex = 0;
+            this.setALedButton.Text = "Set";
+            this.setALedButton.UseVisualStyleBackColor = true;
+            this.setALedButton.Click += new System.EventHandler(this.setALedButton_Click);
+            // 
+            // tBarALed
+            // 
+            this.tBarALed.Location = new System.Drawing.Point(50, 55);
+            this.tBarALed.Maximum = 625;
+            this.tBarALed.Name = "tBarALed";
+            this.tBarALed.Orientation = System.Windows.Forms.Orientation.Vertical;
+            this.tBarALed.Size = new System.Drawing.Size(69, 279);
+            this.tBarALed.TabIndex = 4;
+            this.tBarALed.Scroll += new System.EventHandler(this.tBarALed_Scroll);
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(46, 36);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(36, 20);
+            this.label5.TabIndex = 5;
+            this.label5.Text = "625";
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(46, 337);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(18, 20);
+            this.label6.TabIndex = 6;
+            this.label6.Text = "0";
+            // 
+            // aLedText
+            // 
+            this.aLedText.Location = new System.Drawing.Point(28, 369);
+            this.aLedText.Name = "aLedText";
+            this.aLedText.Size = new System.Drawing.Size(108, 26);
+            this.aLedText.TabIndex = 7;
+            this.aLedText.TextChanged += new System.EventHandler(this.aLedText_TextChanged);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1035, 563);
+            this.ClientSize = new System.Drawing.Size(1196, 563);
+            this.Controls.Add(this.groupBox6);
+            this.Controls.Add(this.groupBox5);
             this.Controls.Add(this.groupBox4);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.groupBox2);
@@ -347,6 +441,11 @@ namespace WFAHandShakingProtocol
             this.groupBox3.ResumeLayout(false);
             this.groupBox4.ResumeLayout(false);
             this.groupBox4.PerformLayout();
+            this.groupBox5.ResumeLayout(false);
+            this.groupBox5.PerformLayout();
+            this.groupBox6.ResumeLayout(false);
+            this.groupBox6.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.tBarALed)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -380,6 +479,14 @@ namespace WFAHandShakingProtocol
         private System.Windows.Forms.TextBox errorText;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.TextBox successText;
+        private System.Windows.Forms.GroupBox groupBox5;
+        private System.Windows.Forms.CheckBox chBoxLedPC13;
+        private System.Windows.Forms.GroupBox groupBox6;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.TrackBar tBarALed;
+        private System.Windows.Forms.Button setALedButton;
+        private System.Windows.Forms.TextBox aLedText;
     }
 }
 
