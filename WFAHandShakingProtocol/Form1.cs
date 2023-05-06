@@ -43,6 +43,7 @@ namespace WFAHandShakingProtocol
         byte[] bALED = new byte[4] { 0x41, 0x4C, 0x45, 0x44 }; // Command ALED if setALedButton is changed
         //OPTION
         byte[] bOPT = new byte[3] { 0x4C, 0x30, 0x32 }; // Default transmit L-0-2
+        byte[] bOptionADC = new byte[3] { 0x41, 0x44, 0x43 };
         //DATA
         byte[] bDATA = new byte[8] { 0x54, 0x55, 0x43, 0x41, 0x4F, 0x44, 0x55, 0x59 }; // Default transmit T-U-C-A-O-D-U-Y
         //SYNC/ACK
@@ -69,8 +70,6 @@ namespace WFAHandShakingProtocol
             //Set count
             successText.Text = successCount.ToString();
             errorText.Text = errorCount.ToString();
-            //Default DLED
-            chBoxLedPC13.Checked = true;
             //
             aLedText.Text = tBarALed.Value.ToString();
         }
@@ -226,17 +225,170 @@ namespace WFAHandShakingProtocol
             }
         }
 
-        private void chBoxLedPC13_CheckedChanged(object sender, EventArgs e)
+        private void chBoxLedPB11_CheckedChanged(object sender, EventArgs e)
         {
             if (eventRadio.Checked == true)
             {
-                if (chBoxLedPC13.Checked == true)
+                if (chBoxLedPB11.Checked == true)
                 {
-                    dataSend = "LED-ON";
+                    dataSend = "LED1-ON";
                 }
                 else
                 {
-                    dataSend = "LED-OFF";
+                    dataSend = "LED1-OFF";
+                }
+
+                // Convert data in textBox into byte array
+                byte[] bytes = Encoding.ASCII.GetBytes(dataSend);
+                if (bytes.Length < 8)
+                {
+                    // If byte array has less than 8 elements, add 0x00 into the remainings
+                    byte[] newbytes = new byte[8];
+                    Array.Copy(bytes, newbytes, bytes.Length);
+                    for (int i = bytes.Length; i < newbytes.Length; i++)
+                    {
+                        newbytes[i] = 0x00;
+                    }
+                    Array.Resize(ref bytes, 8);
+                    Array.Copy(newbytes, bytes, newbytes.Length);
+                }
+                // Concatenate arrays to create a transmitting framedata
+                byte[] dLedDataSend = bSTX.Concat(bDLED).Concat(bOPT).Concat(bytes).Concat(bSYNC).Concat(bETX).ToArray();
+                // Convert the recent array to string of bytes, consisting of hex of each byte
+                string dLedDataSendToHex = BitConverter.ToString(dLedDataSend).Replace("-", " ");
+                // Eliminate the start, sync/ack, exit byte of the framedata to display on the listBox
+                byte[] dLedDataSendDisplay = bDLED.Concat(bOPT).Concat(bytes).ToArray();
+                // Replace the escape sequence created by 0 character in bytes when concatenating
+                string dLedDataSendToChar = Encoding.ASCII.GetString(dLedDataSendDisplay).Replace("\0", "");
+
+                if (serialPort.IsOpen && eventRadio.Checked)
+                {
+                    // Write framedata to serial port
+                    serialPort.Write(dLedDataSend, 0, dLedDataSend.Length);
+                    // Store the written data to validate later
+                    Array.Copy(dLedDataSend, bytesSend, dLedDataSend.Length);
+                    receivedDataBox.Items.Add("DLED data (HEX): " + dLedDataSendToHex);
+                    receivedDataBox.Items.Add("DLED data (CHAR): " + dLedDataSendToChar);
+                    receivedDataBox.Items.Add("");
+                    // Always display the lastest item
+                    receivedDataBox.TopIndex = receivedDataBox.Items.Count - 1;
+                }
+            }
+        }
+
+        private void chBoxLedPB1_CheckedChanged(object sender, EventArgs e)
+        {
+            if (eventRadio.Checked == true)
+            {
+                if (chBoxLedPB1.Checked == true)
+                {
+                    dataSend = "LED2-ON";
+                }
+                else
+                {
+                    dataSend = "LED2-OFF";
+                }
+
+                // Convert data in textBox into byte array
+                byte[] bytes = Encoding.ASCII.GetBytes(dataSend);
+                if (bytes.Length < 8)
+                {
+                    // If byte array has less than 8 elements, add 0x00 into the remainings
+                    byte[] newbytes = new byte[8];
+                    Array.Copy(bytes, newbytes, bytes.Length);
+                    for (int i = bytes.Length; i < newbytes.Length; i++)
+                    {
+                        newbytes[i] = 0x00;
+                    }
+                    Array.Resize(ref bytes, 8);
+                    Array.Copy(newbytes, bytes, newbytes.Length);
+                }
+                // Concatenate arrays to create a transmitting framedata
+                byte[] dLedDataSend = bSTX.Concat(bDLED).Concat(bOPT).Concat(bytes).Concat(bSYNC).Concat(bETX).ToArray();
+                // Convert the recent array to string of bytes, consisting of hex of each byte
+                string dLedDataSendToHex = BitConverter.ToString(dLedDataSend).Replace("-", " ");
+                // Eliminate the start, sync/ack, exit byte of the framedata to display on the listBox
+                byte[] dLedDataSendDisplay = bDLED.Concat(bOPT).Concat(bytes).ToArray();
+                // Replace the escape sequence created by 0 character in bytes when concatenating
+                string dLedDataSendToChar = Encoding.ASCII.GetString(dLedDataSendDisplay).Replace("\0", "");
+
+                if (serialPort.IsOpen && eventRadio.Checked)
+                {
+                    // Write framedata to serial port
+                    serialPort.Write(dLedDataSend, 0, dLedDataSend.Length);
+                    // Store the written data to validate later
+                    Array.Copy(dLedDataSend, bytesSend, dLedDataSend.Length);
+                    receivedDataBox.Items.Add("DLED data (HEX): " + dLedDataSendToHex);
+                    receivedDataBox.Items.Add("DLED data (CHAR): " + dLedDataSendToChar);
+                    receivedDataBox.Items.Add("");
+                    // Always display the lastest item
+                    receivedDataBox.TopIndex = receivedDataBox.Items.Count - 1;
+                }
+            }
+        }
+
+        private void chBoxLedPA7_CheckedChanged(object sender, EventArgs e)
+        {
+            if (eventRadio.Checked == true)
+            {
+                if (chBoxLedPA7.Checked == true)
+                {
+                    dataSend = "LED3-ON";
+                }
+                else
+                {
+                    dataSend = "LED3-OFF";
+                }
+
+                // Convert data in textBox into byte array
+                byte[] bytes = Encoding.ASCII.GetBytes(dataSend);
+                if (bytes.Length < 8)
+                {
+                    // If byte array has less than 8 elements, add 0x00 into the remainings
+                    byte[] newbytes = new byte[8];
+                    Array.Copy(bytes, newbytes, bytes.Length);
+                    for (int i = bytes.Length; i < newbytes.Length; i++)
+                    {
+                        newbytes[i] = 0x00;
+                    }
+                    Array.Resize(ref bytes, 8);
+                    Array.Copy(newbytes, bytes, newbytes.Length);
+                }
+                // Concatenate arrays to create a transmitting framedata
+                byte[] dLedDataSend = bSTX.Concat(bDLED).Concat(bOPT).Concat(bytes).Concat(bSYNC).Concat(bETX).ToArray();
+                // Convert the recent array to string of bytes, consisting of hex of each byte
+                string dLedDataSendToHex = BitConverter.ToString(dLedDataSend).Replace("-", " ");
+                // Eliminate the start, sync/ack, exit byte of the framedata to display on the listBox
+                byte[] dLedDataSendDisplay = bDLED.Concat(bOPT).Concat(bytes).ToArray();
+                // Replace the escape sequence created by 0 character in bytes when concatenating
+                string dLedDataSendToChar = Encoding.ASCII.GetString(dLedDataSendDisplay).Replace("\0", "");
+
+                if (serialPort.IsOpen && eventRadio.Checked)
+                {
+                    // Write framedata to serial port
+                    serialPort.Write(dLedDataSend, 0, dLedDataSend.Length);
+                    // Store the written data to validate later
+                    Array.Copy(dLedDataSend, bytesSend, dLedDataSend.Length);
+                    receivedDataBox.Items.Add("DLED data (HEX): " + dLedDataSendToHex);
+                    receivedDataBox.Items.Add("DLED data (CHAR): " + dLedDataSendToChar);
+                    receivedDataBox.Items.Add("");
+                    // Always display the lastest item
+                    receivedDataBox.TopIndex = receivedDataBox.Items.Count - 1;
+                }
+            }
+        }
+
+        private void chBoxLedPA5_CheckedChanged(object sender, EventArgs e)
+        {
+            if (eventRadio.Checked == true)
+            {
+                if (chBoxLedPA5.Checked == true)
+                {
+                    dataSend = "LED4-ON";
+                }
+                else
+                {
+                    dataSend = "LED4-OFF";
                 }
 
                 // Convert data in textBox into byte array
@@ -302,12 +454,16 @@ namespace WFAHandShakingProtocol
             if (eventRadio.Checked == true)
             {
                 dataSend = aLedText.Text;
-                if (Convert.ToInt32(dataSend) < 100)
+                if (Convert.ToInt32(dataSend) < 1000)
                 {
                     dataSend = "0" + dataSend;
-                    if (Convert.ToInt32(dataSend) < 10)
+                    if (Convert.ToInt32(dataSend) < 100)
                     {
                         dataSend = "0" + dataSend;
+                        if (Convert.ToInt32(dataSend) < 10)
+                        {
+                            dataSend = "0" + dataSend;
+                        }
                     }    
                 }    
                 // Convert data in textBox into byte array
@@ -330,6 +486,48 @@ namespace WFAHandShakingProtocol
                 string aLedDataSendToHex = BitConverter.ToString(aLedDataSend).Replace("-", " ");
                 // Eliminate the start, sync/ack, exit byte of the framedata to display on the listBox
                 byte[] aLedDataSendDisplay = bALED.Concat(bOPT).Concat(bytes).ToArray();
+                // Replace the escape sequence created by 0 character in bytes when concatenating
+                string aLedDataSendToChar = Encoding.ASCII.GetString(aLedDataSendDisplay).Replace("\0", "");
+
+                if (serialPort.IsOpen && eventRadio.Checked && !chBoxALed.Checked)
+                {
+                    // Write framedata to serial port
+                    serialPort.Write(aLedDataSend, 0, aLedDataSend.Length);
+                    // Store the written data to validate later
+                    Array.Copy(aLedDataSend, bytesSend, aLedDataSend.Length);
+                    receivedDataBox.Items.Add("ALED data (HEX): " + aLedDataSendToHex);
+                    receivedDataBox.Items.Add("ALED data (CHAR): " + aLedDataSendToChar);
+                    receivedDataBox.Items.Add("");
+                    // Always display the lastest item
+                    receivedDataBox.TopIndex = receivedDataBox.Items.Count - 1;
+                }
+            }
+        }
+
+        private void chBoxALed_CheckedChanged(object sender, EventArgs e)
+        {
+            if (eventRadio.Checked == true)
+            {
+                dataSend = "ADCInput";
+                byte[] bytes = Encoding.ASCII.GetBytes(dataSend);
+                if (bytes.Length < 8)
+                {
+                    // If byte array has less than 8 elements, add 0x00 into the remainings
+                    byte[] newbytes = new byte[8];
+                    Array.Copy(bytes, newbytes, bytes.Length);
+                    for (int i = bytes.Length; i < newbytes.Length; i++)
+                    {
+                        newbytes[i] = 0x00;
+                    }
+                    Array.Resize(ref bytes, 8);
+                    Array.Copy(newbytes, bytes, newbytes.Length);
+                }
+                // Concatenate arrays to create a transmitting framedata
+                byte[] aLedDataSend = bSTX.Concat(bALED).Concat(bOptionADC).Concat(bytes).Concat(bSYNC).Concat(bETX).ToArray();
+                // Convert the recent array to string of bytes, consisting of hex of each byte
+                string aLedDataSendToHex = BitConverter.ToString(aLedDataSend).Replace("-", " ");
+                // Eliminate the start, sync/ack, exit byte of the framedata to display on the listBox
+                byte[] aLedDataSendDisplay = bALED.Concat(bOptionADC).Concat(bytes).ToArray();
                 // Replace the escape sequence created by 0 character in bytes when concatenating
                 string aLedDataSendToChar = Encoding.ASCII.GetString(aLedDataSendDisplay).Replace("\0", "");
 
@@ -447,7 +645,7 @@ namespace WFAHandShakingProtocol
             }
 
             // Check if option bytes are wrong
-            if (!bytesOptionReceived.SequenceEqual(bOPT))
+            if (!bytesOptionReceived.SequenceEqual(bOPT) && !bytesOptionReceived.SequenceEqual(bOptionADC))
             {
                 validateFlag = false;
             }
