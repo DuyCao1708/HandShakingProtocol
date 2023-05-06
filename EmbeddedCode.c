@@ -43,6 +43,9 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc1;
+DMA_HandleTypeDef hdma_adc1;
+
 TIM_HandleTypeDef htim2;
 
 UART_HandleTypeDef huart1;
@@ -54,8 +57,10 @@ UART_HandleTypeDef huart1;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -75,6 +80,9 @@ uint8_t SYN[] = {0x16U};
 uint8_t strCommand[4];
 uint8_t strOpt[3];
 uint8_t strData[8];
+
+uint32_t adcValue = 0;
+bool adcFlag = false;
 
 bool StrCompare(uint8_t *pBuff, uint8_t *Sample, uint8_t nSize);
 bool WriteComm(uint8_t *pBuff, uint8_t nSize);
@@ -112,8 +120,10 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART1_UART_Init();
   MX_TIM2_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
 	HAL_UART_Receive_IT(&huart1, (uint8_t *)nRxData, MAX_LEN);
@@ -126,51 +136,13 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+		if (adcFlag)
+		{
+				HAL_ADC_Start_DMA(&hadc1, &adcValue, 1);
+		__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_2, (int)adcValue);
+		}
+
 		serialProcess();
-//		strData[0] = 0x30;
-//		strData[1] = 0x30;
-//		strData[2] = 0x31;
-//		uint8_t analogDuty = 0;
-//					for (int i = 0; i < 3; i++) 
-//					{
-//						analogDuty = analogDuty * 10 + (strData[i]-(uint8_t)'0');
-//					}
-//					__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_2, analogDuty*62);
-//					HAL_Delay(1000);
-//					
-//					for (int i = 0; i < 3; i++) 
-//					{
-//						analogDuty = analogDuty * 10 + (strData[i]-(uint8_t)'0');
-//					}
-//					__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_2, 62);
-//					HAL_Delay(1000);
-//					
-//					for (int i = 0; i < 3; i++) 
-//					{
-//						analogDuty = analogDuty * 10 + (strData[i]-(uint8_t)'0');
-//					}
-//					__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_2, 1);
-//					HAL_Delay(1000);
-					
-//		strData[0] = 0x30;
-//		strData[1] = 0x35;
-//		strData[2] = 0x30;
-//					for (int i = 0; i < 3; i++) 
-//					{
-//						analogDuty = analogDuty * 10 + (strData[i]-(uint8_t)'0');
-//					}
-//					__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_2, analogDuty*62);
-//					HAL_Delay(1000);
-//					
-//	 strData[0] = 0x31;
-//		strData[1] = 0x30;
-//		strData[2] = 0x30;
-//					for (int i = 0; i < 3; i++) 
-//					{
-//						analogDuty = analogDuty * 10 + (strData[i]-(uint8_t)'0');
-//					}
-//					__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_2, analogDuty*62);
-//					HAL_Delay(1000);
 
   }
   /* USER CODE END 3 */
@@ -344,13 +316,40 @@ bool serialProcess(void)
 					nIndex += 1;
 					memcpy(nTxData + nIndex, ETX, 1);
 
-					if (StrCompare(strData, (uint8_t *)"LED-ON", 8))
+					if (StrCompare(strData, (uint8_t *)"LED1-ON", 8))
 					{
-						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+						HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_SET);
 					}
-					else if (StrCompare(strData, (uint8_t *)"LED-OFF", 8))
+					else if (StrCompare(strData, (uint8_t *)"LED1-OFF", 8))
 					{
-						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+						HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_RESET);
+					}
+					
+					if (StrCompare(strData, (uint8_t *)"LED2-ON", 8))
+					{
+						HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
+					}
+					else if (StrCompare(strData, (uint8_t *)"LED2-OFF", 8))
+					{
+						HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_RESET);
+					}
+					
+					if (StrCompare(strData, (uint8_t *)"LED3-ON", 8))
+					{
+						HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_SET);
+					}
+					else if (StrCompare(strData, (uint8_t *)"LED3-OFF", 8))
+					{
+						HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_RESET);
+					}
+					
+					if (StrCompare(strData, (uint8_t *)"LED4-ON", 8))
+					{
+						HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+					}
+					else if (StrCompare(strData, (uint8_t *)"LED4-OFF", 8))
+					{
+						HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
 					}
 					
 					WriteComm(nTxData, MAX_LEN);					
@@ -369,13 +368,21 @@ bool serialProcess(void)
 					nIndex += 1;
 					memcpy(nTxData + nIndex, ETX, 1);
 
-					int analogDuty = 0;
-					for (int i = 0; i < 3; i++) 
+					if (StrCompare(strOpt, (uint8_t *)"ADC", 3))
 					{
-						analogDuty = analogDuty * 10 + (int)(strData[i]-(uint8_t)'0');
+						adcFlag = true;
 					}
-					__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_2, analogDuty);
-					HAL_Delay(1000);
+					else
+					{
+						int PWMDuty = 0;
+						for (int i = 0; i < 4; i++) 
+						{
+							PWMDuty = PWMDuty * 10 + (int)(strData[i]-(uint8_t)'0');
+						}
+						__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_2, PWMDuty);
+						
+						adcFlag = false;
+					}
 					
 					WriteComm(nTxData, MAX_LEN);					
 				}
@@ -418,6 +425,7 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
@@ -447,6 +455,59 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
+  PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV6;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+  /* USER CODE END ADC1_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
+
+  /** Common config
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.NbrOfConversion = 1;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_0;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_239CYCLES_5;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
 }
 
 /**
@@ -471,7 +532,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 127;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 625;
+  htim2.Init.Period = 4096;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -542,6 +603,22 @@ static void MX_USART1_UART_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -559,6 +636,12 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5|GPIO_PIN_7, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1|GPIO_PIN_11, GPIO_PIN_RESET);
+
   /*Configure GPIO pin : PC13 */
   GPIO_InitStruct.Pin = GPIO_PIN_13;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -566,11 +649,25 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : PA5 PA7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_5|GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
   /*Configure GPIO pin : PA6 */
   GPIO_InitStruct.Pin = GPIO_PIN_6;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PB1 PB11 */
+  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_11;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB6 PB7 */
   GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
