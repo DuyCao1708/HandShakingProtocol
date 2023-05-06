@@ -72,7 +72,6 @@ uint8_t strCommand[4];
 uint8_t strOpt[3];
 uint8_t strData[8];
 
-uint8_t *subString(uint8_t *s, int pos, int index);
 bool StrCompare(uint8_t *pBuff, uint8_t *Sample, uint8_t nSize);
 bool WriteComm(uint8_t *pBuff, uint8_t nSize);
 bool ReadComm(uint8_t *pBuff, uint8_t nSize);
@@ -94,23 +93,22 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
- 
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
-	HAL_Init();
-	MX_GPIO_Init();
-  MX_USART1_UART_Init();
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
-
+  SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-  SystemClock_Config();
+
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-
+  MX_GPIO_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 	HAL_UART_Receive_IT(&huart1, (uint8_t *)nRxData, MAX_LEN);
   /* USER CODE END 2 */
@@ -119,10 +117,11 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-		serialProcess();
     /* USER CODE END WHILE */
-		
-    /* USER CODE BEGIN 3 */		
+
+    /* USER CODE BEGIN 3 */
+		serialProcess();
+
   }
   /* USER CODE END 3 */
 }
@@ -162,11 +161,11 @@ bool ReadComm(uint8_t *pBuff, uint8_t nSize)
 		uint8_t *subCommand = subString(pBuff, 1, 4);
 		uint8_t *subOpt = subString(pBuff, 5, 3);
 		uint8_t *subData = subString(pBuff, 8, 8);
-		
+
 		memcpy(strCommand, subCommand, 4);
 		memcpy(strOpt, subOpt, 3);
 		memcpy(strData, subData, 8);
-		
+
 		free(subCommand);
 		free(subOpt);
 		free(subData);
@@ -198,7 +197,7 @@ bool serialProcess(void)
 					memcpy(nTxData + nIndex, ACK, 1);
 					nIndex += 1;
 					memcpy(nTxData + nIndex, ETX, 1);
-					
+
 					WriteComm(nTxData, MAX_LEN);
 				}
 				else if (StrCompare(strCommand, (uint8_t *)"GPOS", 4))
@@ -214,7 +213,7 @@ bool serialProcess(void)
 					memcpy(nTxData + nIndex, ACK, 1);
 					nIndex += 1;
 					memcpy(nTxData + nIndex, ETX, 1);
-					
+
 					WriteComm(nTxData, MAX_LEN);
 				}
 				else if (StrCompare(strCommand, (uint8_t *)"GVEL", 4))
@@ -230,7 +229,7 @@ bool serialProcess(void)
 					memcpy(nTxData + nIndex, ACK, 1);
 					nIndex += 1;
 					memcpy(nTxData + nIndex, ETX, 1);
-					
+
 					WriteComm(nTxData, MAX_LEN);
 				}
 				else if (StrCompare(strCommand, (uint8_t *)"GSTT", 4))
@@ -246,7 +245,7 @@ bool serialProcess(void)
 					memcpy(nTxData + nIndex, ACK, 1);
 					nIndex += 1;
 					memcpy(nTxData + nIndex, ETX, 1);
-					
+
 					WriteComm(nTxData, MAX_LEN);
 				}
 				else if (StrCompare(strCommand, (uint8_t *)"GCUS", 4))
@@ -262,7 +261,7 @@ bool serialProcess(void)
 					memcpy(nTxData + nIndex, ACK, 1);
 					nIndex += 1;
 					memcpy(nTxData + nIndex, ETX, 1);
-					
+
 					WriteComm(nTxData, MAX_LEN);
 				}
 				else if (StrCompare(strCommand, (uint8_t *)"GTIM", 4))
@@ -278,7 +277,7 @@ bool serialProcess(void)
 					memcpy(nTxData + nIndex, ACK, 1);
 					nIndex += 1;
 					memcpy(nTxData + nIndex, ETX, 1);
-					
+
 					WriteComm(nTxData, MAX_LEN);
 				}
 				else
@@ -294,7 +293,7 @@ bool serialProcess(void)
 					memcpy(nTxData + nIndex, ACK, 1);
 					nIndex += 1;
 					memcpy(nTxData + nIndex, ETX, 1);
-					
+
 					WriteComm(nTxData, MAX_LEN);
 				}
 				bDataAvailable = false;
@@ -308,7 +307,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
  if(huart->Instance == huart1.Instance)
  {
 	ReadComm(nRxData, MAX_LEN);
-	 
+
 	HAL_UART_Receive_IT(&huart1, (uint8_t *)nRxData, MAX_LEN);
  }
 }
